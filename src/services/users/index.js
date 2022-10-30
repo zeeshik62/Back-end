@@ -25,7 +25,11 @@ const login = async (req, res) => {
                         res.status(200).json({
                             message: "User Login Successfully!",
                             token: loginToken,
+<<<<<<< HEAD
                             userType,
+=======
+                            userType
+>>>>>>> bb12602699ec7188a54066eff3ee94e4e6d269a5
                         });
                     } else {
                         return res.status(403).json({ message: "Invalid Password!!" });
@@ -42,9 +46,7 @@ const login = async (req, res) => {
 const signUp = async (req, res) => {
     try {
         const { userName, email, password, userType } = req.body;
-        console.log("🚀 ~ file: index.js ~ line 18 ~ signUp ~ req.body", req.body);
-
-        const _user = await Users.findOne({ email });
+        const _user = await Users.findOne({ email, userType });
 
         if (_user) {
             console.log("User Already Exists!");
@@ -74,6 +76,7 @@ const signUp = async (req, res) => {
                         res.status(200).json({
                             message: "User Signed Up Successfully!",
                             token,
+                            userType
                         });
                     } else {
                         return res.status(403).json({ message: "Invalid Password!!" });

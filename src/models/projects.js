@@ -1,0 +1,39 @@
+
+const mongoose = require("mongoose");
+
+const projectsSchema = mongoose.Schema({
+    _id: {
+        type: mongoose.Schema.Types.ObjectId
+    },
+    name: {
+        type: String,
+        required: true,
+    },
+    imagePath: {
+        type: String,
+        required: true,
+    },
+    description: {
+        type: String,
+        required: false,
+    },
+    stack: {
+        type: String,
+        required: true
+    },
+    isCompleted: {
+        type: Boolean,
+        required: true
+    },
+    createdAt: {
+        type: Date,
+        default: Date.now,
+    },
+    updatedAt: {
+        type: Date,
+        default: Date.now
+    }
+},
+    { timestamps: true });
+
+module.exports = mongoose.model("projects", projectsSchema);

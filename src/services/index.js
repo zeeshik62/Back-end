@@ -1,3 +1,4 @@
 module.exports = {
-    UserServices: require("./users")
+    UserServices: require("./users"),
+    ProjectServices: require("./projects"),
 }

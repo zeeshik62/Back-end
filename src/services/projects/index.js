@@ -17,6 +17,7 @@ const getProjects = async (req, res) => {
 const addProject = async (req, res) => {
     try {
         const { projectDescription, projectName, stackName, imageSrc } = req.body;
+        console.log("🚀 ~ file: index.js ~ line 20 ~ addProject ~ req.body", req.body)
         const _project = await Project.findOne({ projectName, stackName });
 
         if (_project) {

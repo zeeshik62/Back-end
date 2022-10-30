@@ -25,11 +25,7 @@ const login = async (req, res) => {
                         res.status(200).json({
                             message: "User Login Successfully!",
                             token: loginToken,
-<<<<<<< HEAD
                             userType,
-=======
-                            userType
->>>>>>> bb12602699ec7188a54066eff3ee94e4e6d269a5
                         });
                     } else {
                         return res.status(403).json({ message: "Invalid Password!!" });

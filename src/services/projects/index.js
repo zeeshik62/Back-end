@@ -17,7 +17,7 @@ const getProjects = async (req, res) => {
 const addProject = async (req, res) => {
     try {
         const { projectDescription, projectName, stackName, imageSrc } = req.body;
-        const _project = await Project.findOne({ projectName, stackName });
+        const _project = await Project.findOne({ name: projectName, stack: stackName }).lean();
 
         if (_project) {
             return res.status(403).json({ message: "Project Already Exists!" });

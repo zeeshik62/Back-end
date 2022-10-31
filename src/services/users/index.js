@@ -8,6 +8,7 @@ const saltRounds = 10;
 const login = async (req, res) => {
     try {
         const { email, password, userType } = req.body;
+        console.log("🚀 ~ file: index.js ~ line 11 ~ login ~ userType", userType)
         const _user = await Users.findOne({ email, userType });
         if (_user) {
             bcrypt.compare(password, _user.password, async (err, result) => {
@@ -59,7 +60,7 @@ const signUp = async (req, res) => {
                         const userModel = new Users({
                             _id: mongoose.Types.ObjectId(),
                             userName,
-                            email,
+                            email: email.toLowerCase(),
                             password: hash,
                             userType,
                         });
@@ -82,7 +83,23 @@ const signUp = async (req, res) => {
         }
     } catch (error) { }
 };
+const getAllUsers = async (req, res) => {
+    try {
+        const _students = await Users.find({ userType: 'Student' }).lean();
+        if (_students) {
+            res.status(200).json({
+                message: "All Students!",
+                _students
+            });
+        } else {
+            return res.status(404).json({
+                message: "No user found!!",
+            });
+        }
+    } catch (error) { }
+};
 module.exports = {
     login,
     signUp,
+    getAllUsers
 };

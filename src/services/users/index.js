@@ -8,7 +8,6 @@ const saltRounds = 10;
 const login = async (req, res) => {
     try {
         const { email, password, userType } = req.body;
-        console.log("🚀 ~ file: index.js ~ line 11 ~ login ~ userType", userType)
         const _user = await Users.findOne({ email, userType });
         if (_user) {
             bcrypt.compare(password, _user.password, async (err, result) => {

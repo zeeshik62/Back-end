@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
-const Users = require("../../models/users");
+const Students = require("../../models/students");
+const Teams = require("../../models/teams");
 const jwt = require("jsonwebtoken");
 
 const saltRounds = 10;
@@ -8,9 +9,9 @@ const saltRounds = 10;
 const login = async (req, res) => {
     try {
         const { email, password, userType } = req.body;
-        const _user = await Users.findOne({ email, userType }).lean();
-        if (_user) {
-            bcrypt.compare(password, _user.password, async (err, result) => {
+        const _student = await Students.findOne({ email, userType }).lean();
+        if (_student) {
+            bcrypt.compare(password, _student.password, async (err, result) => {
                 if (err) {
                     return res.status(500).json({
                         message: "Password decryption error!",
@@ -18,7 +19,7 @@ const login = async (req, res) => {
                 } else {
                     if (result) {
                         const loginToken = jwt.sign(
-                            _user,
+                            _student,
                             process.env.JWT_SECRET_KEY,
                             { expiresIn: "8h" }
                         );
@@ -45,8 +46,8 @@ const login = async (req, res) => {
 };
 const signUp = async (req, res) => {
     try {
-        const { userName, email, password, userType } = req.body;
-        const _user = await Users.findOne({ email, userType });
+        const { name, email, password, section, rollNum, userType } = req.body;
+        const _user = await Students.findOne({ email, rollNum }).lean();
 
         if (_user) {
             console.log("User Already Exists!");
@@ -60,11 +61,13 @@ const signUp = async (req, res) => {
                     });
                 } else {
                     if (hash) {
-                        const userModel = new Users({
+                        const userModel = new Students({
                             _id: mongoose.Types.ObjectId(),
-                            userName,
+                            name,
                             email,
                             password: hash,
+                            section,
+                            rollNum,
                             userType,
                         });
                         await userModel.save();
@@ -92,7 +95,7 @@ const signUp = async (req, res) => {
 };
 const getAllUsers = async (req, res) => {
     try {
-        const _students = await Users.find({ userType: 'Student' }).lean();
+        const _students = await Students.find({}).lean();
         if (_students) {
             res.status(200).json({
                 message: "All Students!",
@@ -109,7 +112,32 @@ const getAllUsers = async (req, res) => {
         });
     }
 };
+const createTeam = async (req, res) => {
+    try {
+        const { teamMakerName, teamMembers } = req.body;
+        // const _students = await Teams.find({}).lean();
+        // if (_students) {
+        const _team = await Teams({
+            _id: mongoose.Types.ObjectId(),
+            teamMakerName,
+            teamMembers
+        })
+        res.status(200).json({
+            message: "All Students!",
+        });
+        // } else {
+        //     return res.status(404).json({
+        //         message: "No user found!!",
+        //     });
+        // }
+    } catch (error) {
+        return res.status(500).json({
+            message: "Server Internal Error",
+        });
+    }
+};
 module.exports = {
+    createTeam,
     login,
     signUp,
     getAllUsers

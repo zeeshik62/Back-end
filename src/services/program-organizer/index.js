@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
-const Users = require("../../models/users");
+const ProgramOrganizer = require("../../models/program-organizer");
 const jwt = require("jsonwebtoken");
 
 const saltRounds = 10;
@@ -8,7 +8,7 @@ const saltRounds = 10;
 const login = async (req, res) => {
     try {
         const { email, password, userType } = req.body;
-        const _user = await Users.findOne({ email, userType }).lean();
+        const _user = await ProgramOrganizer.findOne({ email }).lean();
         if (_user) {
             bcrypt.compare(password, _user.password, async (err, result) => {
                 if (err) {
@@ -46,7 +46,7 @@ const login = async (req, res) => {
 const signUp = async (req, res) => {
     try {
         const { userName, email, password, userType } = req.body;
-        const _user = await Users.findOne({ email, userType });
+        const _user = await ProgramOrganizer.findOne({ email }).lean();
 
         if (_user) {
             console.log("User Already Exists!");
@@ -60,9 +60,9 @@ const signUp = async (req, res) => {
                     });
                 } else {
                     if (hash) {
-                        const userModel = new Users({
+                        const userModel = new ProgramOrganizer({
                             _id: mongoose.Types.ObjectId(),
-                            userName,
+                            name: userName,
                             email,
                             password: hash,
                             userType,

@@ -5,13 +5,17 @@ const teamsSchema = mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId
     },
     teamMakerName: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "students"
+        type: String,
+        require: true
     },
     teamMembers: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "students"
+        id: String,
+        status: Boolean
     }],
+    status: {
+        type: String,
+        require: true
+    }
 },
     { timestamps: true })
 

@@ -1,7 +1,6 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 const Students = require("../../models/students");
-const Teams = require("../../models/teams");
 const jwt = require("jsonwebtoken");
 
 const saltRounds = 10;
@@ -112,33 +111,9 @@ const getAllUsers = async (req, res) => {
         });
     }
 };
-const createTeam = async (req, res) => {
-    try {
-        const { teamMakerName, teamMembers } = req.body;
-        // const _students = await Teams.find({}).lean();
-        // if (_students) {
-        const _team = await Teams({
-            _id: mongoose.Types.ObjectId(),
-            teamMakerName,
-            teamMembers
-        })
-        res.status(200).json({
-            message: "All Students!",
-        });
-        // } else {
-        //     return res.status(404).json({
-        //         message: "No user found!!",
-        //     });
-        // }
-    } catch (error) {
-        return res.status(500).json({
-            message: "Server Internal Error",
-        });
-    }
-};
+
 module.exports = {
-    createTeam,
     login,
     signUp,
-    getAllUsers
+    getAllUsers,
 };

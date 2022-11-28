@@ -1,116 +1,76 @@
 const mongoose = require("mongoose");
-const bcrypt = require("bcryptjs");
-const Users = require("../../models/users");
-const jwt = require("jsonwebtoken");
+const Teams = require("../../models/teams");
+const Notifications = require("../../models/notification");
+const Students = require("../../models/students");
 
-const saltRounds = 10;
-
-const login = async (req, res) => {
+const createTeam = async (req, res) => {
     try {
-        const { email, password, userType } = req.body;
-        const _user = await Users.findOne({ email, userType }).lean();
-        if (_user) {
-            bcrypt.compare(password, _user.password, async (err, result) => {
-                if (err) {
-                    return res.status(500).json({
-                        message: "Password decryption error!",
-                    });
-                } else {
-                    if (result) {
-                        const loginToken = jwt.sign(
-                            _user,
-                            process.env.JWT_SECRET_KEY,
-                            { expiresIn: "8h" }
-                        );
-                        res.status(200).json({
-                            message: "User Login Successfully!",
-                            token: loginToken,
-                            userType,
-                        });
-                    } else {
-                        return res.status(403).json({ message: "Invalid Password!!" });
-                    }
-                }
-            });
-        } else {
-            return res.status(404).json({
-                message: "No user found!!",
-            });
-        }
+        const { teamMakerName, teamMembers } = req.body;
+        const _team = new Teams({
+            _id: mongoose.Types.ObjectId(),
+            teamMakerName,
+            teamMembers,
+            status: 'pending'
+        })
+        let allPromises = []
+        teamMembers.forEach((element) => {
+            allPromises.push({
+                _id: mongoose.Types.ObjectId(),
+                flagId: _team._id,
+                sender: teamMakerName,
+                receiver: element.id,
+                type: 'chooseTeam',
+                status: 'pending'
+            })
+        })
+        await _team.save()
+        await Notifications.insertMany(allPromises)
+        res.status(200).json({
+            message: "Request sent to your team!!",
+        });
     } catch (error) {
+        console.log("🚀 ~ file: index.js ~ line 142 ~ createTeam ~ error", error)
         return res.status(500).json({
             message: "Server Internal Error",
         });
     }
 };
-const signUp = async (req, res) => {
+const getTeam = async (req, res) => {
     try {
-        const { userName, email, password, userType } = req.body;
-        const _user = await Users.findOne({ email, userType });
-
-        if (_user) {
-            console.log("User Already Exists!");
-            return res.status(403).json({ message: "User Already Exists!" });
+        const { id } = req.query;
+        // will find team members of given id
+        const _teams = await Teams.find({ teamMakerName: id }).lean()
+        let _teamMember = null
+        let array = []
+        // if team maker name is found if condition will be true otherwise else
+        if (_teams.length > 0) {
+            _teamMember = _teams
         } else {
-            bcrypt.hash(password, saltRounds, async (err, hash) => {
-                if (err) {
-                    console.log("Password decryption error!");
-                    return res.status(500).json({
-                        message: "Password decryption error!",
-                    });
-                } else {
-                    if (hash) {
-                        const userModel = new Users({
-                            _id: mongoose.Types.ObjectId(),
-                            userName,
-                            email,
-                            password: hash,
-                            userType,
-                        });
-                        await userModel.save();
-                        const token = jwt.sign(
-                            { ...userModel.toJSON() },
-                            process.env.JWT_SECRET_KEY,
-                            { expiresIn: "8h" }
-                        );
-                        res.status(200).json({
-                            message: "User Signed Up Successfully!",
-                            token,
-                            userType
-                        });
-                    } else {
-                        return res.status(403).json({ message: "Invalid Password!!" });
-                    }
-                }
-            });
+            _teamMember = await Teams.find({ teamMembers: { $elemMatch: { "id": id } } })
         }
-    } catch (error) {
-        return res.status(500).json({
-            message: "Server Internal Error",
+        // find the team maker's & team members details 
+        let teamMakerData = await Students.findById(_teamMember[0].teamMakerName).lean()
+        await Promise.all(_teamMember[0].teamMembers.map(async (el) => {
+            let _student = await Students.findById(el.id).lean()
+            array.push({ ..._student, status: el.status, teamCreatedAt: _teamMember[0].createdAt, teamId: _teamMember[0]._id })
+        }))
+        array.push({ ...teamMakerData, status: true, teamCreatedAt: _teamMember[0].createdAt, teamId: _teamMember[0]._id })
+        // send back to frontend success message & the end result.
+        res.status(200).json({
+            message: "success",
+            teamData: array,
+            teamStatus: _teamMember[0].status
         });
-    }
-};
-const getAllUsers = async (req, res) => {
-    try {
-        const _students = await Users.find({ userType: 'Student' }).lean();
-        if (_students) {
-            res.status(200).json({
-                message: "All Students!",
-                _students
-            });
-        } else {
-            return res.status(404).json({
-                message: "No user found!!",
-            });
-        }
+
     } catch (error) {
+        console.log("🚀 ~ file: index.js ~ line 176 ~ getTeam ~ error", error)
         return res.status(500).json({
             message: "Server Internal Error",
+            error
         });
     }
 };
 module.exports = {
-    login,
-    signUp,
-    getAllUsers
+    createTeam,
+    getTeam,
 };

@@ -17,6 +17,10 @@ const projectsSchema = mongoose.Schema({
         type: String,
         required: false,
     },
+    organizerId: {
+        type: String,
+        required: true
+    },
     stack: {
         type: String,
         required: true

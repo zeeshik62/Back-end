@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const AppliedProjects = require("../../models/applied-projects");
 const Project = require("../../models/projects");
+const Notification = require("../../models/notification");
 
 const getProjects = async (req, res) => {
     try {
@@ -17,7 +18,7 @@ const getProjects = async (req, res) => {
 };
 const addProject = async (req, res) => {
     try {
-        const { projectDescription, projectName, stackName, imageSrc } = req.body;
+        const { projectDescription, projectName, stackName, imageSrc, userId } = req.body;
         const _project = await Project.findOne({ name: projectName, stack: stackName }).lean();
 
         if (_project) {
@@ -28,6 +29,7 @@ const addProject = async (req, res) => {
                 name: projectName,
                 imagePath: imageSrc,
                 description: projectDescription,
+                organizerId: userId,
                 stack: stackName,
                 isCompleted: false,
                 createdAt: new Date()
@@ -45,20 +47,31 @@ const addProject = async (req, res) => {
 };
 const applyProject = async (req, res) => {
     try {
-        const { _id, teamId } = req.body;
+        const { _id, userId, teamId, organizerId: supervisorId } = req.body;
         const _applyForProject = new AppliedProjects({
             _id: mongoose.Types.ObjectId(),
             projectId: _id,
             teamId,
             status: "pending",
+            supervisorId,
             createdAt: new Date(),
             updatedAt: new Date()
         })
+        const _notification = new Notification({
+            _id: mongoose.Types.ObjectId(),
+            flagId: teamId,
+            sender: userId,
+            receiver: supervisorId,
+            type: 'project request',
+            status: 'pending'
+        })
         await _applyForProject.save()
+        await _notification.save()
         res.status(201).json({
             message: 'request send successfully!'
         })
     } catch (error) {
+        console.log("🚀 ~ file: index.js:75 ~ applyProject ~ error", error)
         res.status(500).json({
             error: error.message
         })

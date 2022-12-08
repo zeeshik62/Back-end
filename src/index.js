@@ -5,7 +5,7 @@ const bodyParser = require('body-parser');
 const routes = require("./controllers")
 const DbConnection = require("./database")
 const app = express();
-const PORT = process.env.NODE_PORT || 3001
+const PORT = process.env.PORT || 3001
 
 const startNodeJsServer = async () => {
     try {

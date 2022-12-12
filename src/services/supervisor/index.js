@@ -1,14 +1,18 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
-const Users = require("../../models/users");
+const Supervisor = require("../../models/supervisor");
+const AppliedProjects = require("../../models/applied-projects");
+const Projects = require("../../models/projects");
+const Students = require("../../models/students");
 const jwt = require("jsonwebtoken");
+const Teams = require("../../models/teams");
 
 const saltRounds = 10;
 
 const login = async (req, res) => {
     try {
         const { email, password, userType } = req.body;
-        const _user = await Users.findOne({ email, userType }).lean();
+        const _user = await Supervisor.findOne({ email }).lean();
         if (_user) {
             bcrypt.compare(password, _user.password, async (err, result) => {
                 if (err) {
@@ -46,11 +50,11 @@ const login = async (req, res) => {
 const signUp = async (req, res) => {
     try {
         const { userName, email, password, userType } = req.body;
-        const _user = await Users.findOne({ email, userType });
+        const _user = await Supervisor.findOne({ email }).lean();
 
         if (_user) {
-            console.log("User Already Exists!");
-            return res.status(403).json({ message: "User Already Exists!" });
+            console.log("Supervisor Already Exists!");
+            return res.status(403).json({ message: "Supervisor Already Exists!" });
         } else {
             bcrypt.hash(password, saltRounds, async (err, hash) => {
                 if (err) {
@@ -60,9 +64,9 @@ const signUp = async (req, res) => {
                     });
                 } else {
                     if (hash) {
-                        const userModel = new Users({
+                        const userModel = new Supervisor({
                             _id: mongoose.Types.ObjectId(),
-                            userName,
+                            name: userName,
                             email,
                             password: hash,
                             userType,
@@ -74,7 +78,7 @@ const signUp = async (req, res) => {
                             { expiresIn: "8h" }
                         );
                         res.status(200).json({
-                            message: "User Signed Up Successfully!",
+                            message: "Supervisor Signed Up Successfully!",
                             token,
                             userType
                         });
@@ -90,13 +94,47 @@ const signUp = async (req, res) => {
         });
     }
 };
-const getAllUsers = async (req, res) => {
+const getAllSupervisor = async (req, res) => {
     try {
-        const _students = await Users.find({ userType: 'Student' }).lean();
-        if (_students) {
+        const _supervisor = await Supervisor.find({}).lean();
+        if (_supervisor) {
             res.status(200).json({
-                message: "All Students!",
-                _students
+                message: "All supervisor!",
+                _supervisor
+            });
+        } else {
+            return res.status(404).json({
+                message: "No user found!!",
+            });
+        }
+    } catch (error) {
+        return res.status(500).json({
+            message: "Server Internal Error",
+        });
+    }
+};
+const getAllRequests = async (req, res) => {
+    try {
+        const { userId } = req.query;
+        const _appliedProjects = await AppliedProjects.find({ supervisorId: userId }).lean();
+        if (_appliedProjects) {
+            let _requests = []
+            await Promise.all(_appliedProjects.map(async (el) => {
+                let _projectDetails = await Projects.findById(el.projectId).lean()
+                let _teamDetails = await Teams.findById(el.teamId).lean()
+                let makerDetails = []
+                let _maker = await Students.findById(_teamDetails.teamMakerName).lean()
+                makerDetails.push(_maker)
+                await Promise.all(_teamDetails.teamMembers.map(async (el) => {
+                    let _member = await Students.findById(el.id).lean()
+                    makerDetails.push(_member)
+                }))
+                _requests.push({ projectDetails: _projectDetails, teamDetails: _teamDetails })
+            }
+            ))
+            res.status(200).json({
+                message: "All supervisor!",
+                _requests
             });
         } else {
             return res.status(404).json({
@@ -112,5 +150,6 @@ const getAllUsers = async (req, res) => {
 module.exports = {
     login,
     signUp,
-    getAllUsers
+    getAllSupervisor,
+    getAllRequests
 };

@@ -38,8 +38,9 @@ const login = async (req, res) => {
             });
         }
     } catch (error) {
+        console.log("🚀 ~ file: index.js:41 ~ login ~ error", error)
         return res.status(500).json({
-            message: "Server Internal Error",
+            message: `Server Internal Error ${error}`,
         });
     }
 };

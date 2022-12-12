@@ -21,6 +21,10 @@ const projectsSchema = mongoose.Schema({
         type: String,
         required: true
     },
+    supervisorName: {
+        type: String,
+        required: true
+    },
     stack: {
         type: String,
         required: true

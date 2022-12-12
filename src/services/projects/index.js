@@ -18,7 +18,7 @@ const getProjects = async (req, res) => {
 };
 const addProject = async (req, res) => {
     try {
-        const { projectDescription, projectName, stackName, imageSrc, userId } = req.body;
+        const { projectDescription, projectName, stackName, supervisorName, imageSrc, userId } = req.body;
         const _project = await Project.findOne({ name: projectName, stack: stackName }).lean();
 
         if (_project) {
@@ -31,6 +31,7 @@ const addProject = async (req, res) => {
                 description: projectDescription,
                 organizerId: userId,
                 stack: stackName,
+                supervisorName,
                 isCompleted: false,
                 createdAt: new Date()
             })

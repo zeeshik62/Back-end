@@ -5,6 +5,7 @@ const students = require("./students")
 const supervisor = require("./supervisor")
 const users = require("./user")
 const teams = require("./teams")
+const hod = require("./hod")
 const notification = require("./notifications")
 const router = express.Router()
 
@@ -16,5 +17,6 @@ module.exports = () => {
     router.use("/supervisors", supervisor())
     router.use("/teams", teams())
     router.use("/user", users())
+    router.use("/hod", hod())
     return router
 }

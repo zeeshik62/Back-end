@@ -12,6 +12,10 @@ const teamsSchema = mongoose.Schema({
         id: String,
         status: Boolean
     }],
+    stage: {
+        type: String,
+        require: true
+    },
     status: {
         type: String,
         require: true

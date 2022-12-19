@@ -25,12 +25,20 @@ const projectsSchema = mongoose.Schema({
         type: String,
         required: true
     },
+    supervisorId: {
+        type: String,
+        required: true
+    },
     stack: {
         type: String,
         required: true
     },
     isCompleted: {
         type: Boolean,
+        required: true
+    },
+    stage: {
+        type: String,
         required: true
     },
     createdAt: {

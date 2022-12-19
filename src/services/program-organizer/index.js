@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 const ProgramOrganizer = require("../../models/program-organizer");
+const Project = require("../../models/projects");
 const jwt = require("jsonwebtoken");
 
 const saltRounds = 10;
@@ -38,6 +39,7 @@ const login = async (req, res) => {
             });
         }
     } catch (error) {
+        console.log("🚀 ~ file: index.js:42 ~ login ~ error", error)
         return res.status(500).json({
             message: "Server Internal Error",
         });
@@ -92,18 +94,41 @@ const signUp = async (req, res) => {
 };
 const getAllUsers = async (req, res) => {
     try {
-        const _students = await Users.find({ userType: 'Student' }).lean();
-        if (_students) {
+        const organizer = await ProgramOrganizer.find({}).lean();
+        if (organizer) {
             res.status(200).json({
                 message: "All Students!",
-                _students
+                organizer
             });
         } else {
             return res.status(404).json({
-                message: "No user found!!",
+                message: "No organizer found!!",
             });
         }
     } catch (error) {
+        console.log("🚀 ~ file: index.js:107 ~ getAllUsers ~ error", error)
+        return res.status(500).json({
+            message: "Server Internal Error",
+        });
+    }
+};
+const getDashboardData = async (req, res) => {
+    try {
+        const { id } = req.params
+        const _projects = await Project.find({ organizerId: id }).lean()
+        if (_projects) {
+            res.status(200).json({
+                message: "All Students!",
+                _projects
+            });
+        } else {
+            return res.status(201).json({
+                message: "No projects found!!",
+                _projects: []
+            });
+        }
+    } catch (error) {
+        console.log("🚀 ~ file: index.js:132 ~ getDashboardData ~ error", error)
         return res.status(500).json({
             message: "Server Internal Error",
         });
@@ -112,5 +137,6 @@ const getAllUsers = async (req, res) => {
 module.exports = {
     login,
     signUp,
-    getAllUsers
+    getAllUsers,
+    getDashboardData
 };

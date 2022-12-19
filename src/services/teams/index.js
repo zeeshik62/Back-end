@@ -10,6 +10,7 @@ const createTeam = async (req, res) => {
             _id: mongoose.Types.ObjectId(),
             teamMakerName,
             teamMembers,
+            stage: 'initial',
             status: 'pending'
         })
         let allPromises = []
@@ -49,18 +50,26 @@ const getTeam = async (req, res) => {
             _teamMember = await Teams.find({ teamMembers: { $elemMatch: { "id": id } } })
         }
         // find the team maker's & team members details 
-        let teamMakerData = await Students.findById(_teamMember[0].teamMakerName).lean()
-        await Promise.all(_teamMember[0].teamMembers.map(async (el) => {
-            let _student = await Students.findById(el.id).lean()
-            array.push({ ..._student, status: el.status, teamCreatedAt: _teamMember[0].createdAt, teamId: _teamMember[0]._id })
-        }))
-        array.push({ ...teamMakerData, status: true, teamCreatedAt: _teamMember[0].createdAt, teamId: _teamMember[0]._id })
-        // send back to frontend success message & the end result.
-        res.status(200).json({
-            message: "success",
-            teamData: array,
-            teamStatus: _teamMember[0].status
-        });
+        if (_teamMember.length > 0) {
+            let teamMakerData = await Students.findById(_teamMember[0]?.teamMakerName).lean()
+            await Promise.all(_teamMember[0].teamMembers.map(async (el) => {
+                let _student = await Students.findById(el.id).lean()
+                array.push({ ..._student, status: el.status, teamCreatedAt: _teamMember[0].createdAt, teamId: _teamMember[0]._id })
+            }))
+            array.push({ ...teamMakerData, status: true, teamCreatedAt: _teamMember[0].createdAt, teamId: _teamMember[0]._id })
+            // send back to frontend success message & the end result.
+            res.status(200).json({
+                message: "success",
+                teamData: array,
+                teamStatus: _teamMember[0].status
+            });
+        } else {
+            res.status(200).json({
+                message: "success",
+                teamData: [],
+                teamStatus: null
+            });
+        }
 
     } catch (error) {
         console.log("🚀 ~ file: index.js ~ line 176 ~ getTeam ~ error", error)

@@ -1,7 +1,10 @@
+const Announcement = require("../../models/announcement");
 const Notification = require("../../models/notification");
 const Student = require("../../models/students");
 const Teams = require("../../models/teams");
+const Projects = require("../../models/projects");
 const { ObjectId } = require('mongoose').Types
+const mongoose = require("mongoose");
 
 const getAllNotifications = async (req, res) => {
     try {
@@ -48,7 +51,10 @@ const acceptNotification = async (req, res) => {
                 await Teams.findByIdAndUpdate(values.flagId, { teamMembers: _teamMembers }).lean()
             }))
             let flag = _teams.teamMembers.filter(el => !el.status)
-            flag.length == 0 && await Teams.findByIdAndUpdate(values.flagId, { status: 'accepted' }).lean()
+            if (flag.length == 0) {
+                await Teams.findByIdAndUpdate(values.flagId, { status: 'accepted' }).lean()
+                await Projects.findByIdAndUpdate(values.projectId, { isCompleted: true }).lean()
+            }
             res.status(200).json({
                 message: "Notification accepted successfully!",
             });
@@ -80,7 +86,46 @@ const rejectNotification = async (req, res) => {
             });
         }
     } catch (error) {
-        console.log("🚀 ~ file: index.js ~ line 74 ~ rejectNotification ~ error", error)
+        console.log("🚀 ~ file: index.js ~ line 87 ~ rejectNotification ~ error", error)
+        return res.status(500).json({
+            message: "Server Internal Error",
+        });
+    }
+};
+const announcement = async (req, res) => {
+    try {
+        const { description, userId, fileName, studentList, supervisorList } = req.body;
+        const _announcement = new Announcement({
+            _id: mongoose.Types.ObjectId(),
+            announcement: true,
+            sender: userId,
+            type: 'announcement',
+            text: description,
+            fileName,
+            status: 'pending',
+            studentList,
+            supervisorList
+        })
+        await _announcement.save()
+        res.status(200).json({
+            message: "Announcement send successfully!",
+        });
+    } catch (error) {
+        console.log("🚀 ~ file: index.js:108 ~ announcement ~ error", error)
+        return res.status(500).json({
+            message: "Server Internal Error",
+        });
+    }
+};
+const getAnnouncement = async (req, res) => {
+    try {
+        const _ann = await Announcement.find({ status: 'pending' })
+        res.status(200).json({
+            message: "Announcement successfully!",
+            _ann
+        });
+    } catch (error) {
+        console.log("🚀 ~ file: index.js:108 ~ announcement ~ error", error)
         return res.status(500).json({
             message: "Server Internal Error",
         });
@@ -89,5 +134,7 @@ const rejectNotification = async (req, res) => {
 module.exports = {
     acceptNotification,
     getAllNotifications,
-    rejectNotification
+    rejectNotification,
+    announcement,
+    getAnnouncement
 };

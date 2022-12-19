@@ -6,4 +6,5 @@ module.exports = {
     SupervisorServices: require("./supervisor"),
     TeamServices: require("./teams"),
     UserServices: require("./users"),
+    HodServices: require("./hod"),
 }

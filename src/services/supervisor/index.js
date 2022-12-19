@@ -147,9 +147,76 @@ const getAllRequests = async (req, res) => {
         });
     }
 };
+const getDashboardData = async (req, res) => {
+    try {
+        const { id } = req.params
+        const _projects = await Projects.find({ supervisorId: id }).lean()
+        if (_projects) {
+            res.status(200).json({
+                message: "success!!",
+                _projects
+            });
+        } else {
+            return res.status(201).json({
+                message: "No projects found!!",
+                _projects
+            });
+        }
+    } catch (error) {
+        return res.status(500).json({
+            message: "Server Internal Error",
+        });
+    }
+};
+const updateStage = async (req, res) => {
+    try {
+        const { values } = req.body.params
+        await Projects.findOneAndUpdate(values._id, { stage: stageNumber(values.stage) }).lean()
+        res.status(200).json({
+            message: "stage updated!"
+        });
+    } catch (error) {
+        console.log("🚀 ~ file: index.js:179 ~ updateStage ~ error", error)
+        return res.status(500).json({
+            message: "Server Internal Error",
+        });
+    }
+};
+const getChatData = async (req, res) => {
+    try {
+        const { values } = req.query
+        let arr = []
+        await Promise.all(values.map(async (student) => {
+            const _student = await Students.findById(student.studentId).lean()
+            arr.push(_student)
+        }))
+        // await Projects.findOneAndUpdate(values._id, { stage: stageNumber(values.stage) }).lean()
+        res.status(200).json({
+            message: "stage updated!",
+            studentDetails: arr
+        });
+    } catch (error) {
+        console.log("🚀 ~ file: index.js:179 ~ updateStage ~ error", error)
+        return res.status(500).json({
+            message: "Server Internal Error",
+        });
+    }
+};
+
+const stageNumber = (params) => {
+    const obj = {
+        first: 'second',
+        second: 'third',
+        third: 'third'
+    }
+    return obj[params]
+}
 module.exports = {
     login,
     signUp,
     getAllSupervisor,
-    getAllRequests
+    getAllRequests,
+    getDashboardData,
+    updateStage,
+    getChatData
 };

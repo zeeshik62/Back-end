@@ -2,15 +2,38 @@ const mongoose = require("mongoose");
 const AppliedProjects = require("../../models/applied-projects");
 const Project = require("../../models/projects");
 const Notification = require("../../models/notification");
+const Teams = require("../../models/teams");
+const Students = require("../../models/students");
 
 const getProjects = async (req, res) => {
     try {
         const _projects = await Project.find({}).lean()
+        let finalData = []
+        let teamsData = []
+        await Promise.all(_projects.map(async (project) => {
+            const _appliedProjects = await AppliedProjects.findOne({ projectId: project._id.toString() }).lean()
+            let teamId = _appliedProjects?.teamId
+            if (teamId) {
+                const _team = await Teams.findById(teamId).lean()
+                let _teamMaker = await Students.findById(_team.teamMakerName).lean()
+                teamsData.push(_teamMaker?.name)
+                await Promise.all(_team.teamMembers.map(async (member) => {
+                    let _member = await Students.findById(member.id).lean()
+                    teamsData.push(_member?.name)
+                }))
+                let obj = { ...project, teamsData }
+                finalData.push(obj)
+            } else {
+                finalData.push(project)
+            }
+        }))
+
         res.status(201).json({
-            projects: _projects
+            projects: finalData
         })
 
     } catch (error) {
+        console.log("🚀 ~ file: index.js:31 ~ getProjects ~ error", error)
         res.status(500).json({
             error: error.message
         })
@@ -18,7 +41,7 @@ const getProjects = async (req, res) => {
 };
 const addProject = async (req, res) => {
     try {
-        const { projectDescription, projectName, stackName, supervisorName, imageSrc, userId } = req.body;
+        const { projectDescription, projectName, stackName, supervisorName, supervisorId, imageSrc, userId } = req.body;
         const _project = await Project.findOne({ name: projectName, stack: stackName }).lean();
 
         if (_project) {
@@ -31,7 +54,9 @@ const addProject = async (req, res) => {
                 description: projectDescription,
                 organizerId: userId,
                 stack: stackName,
+                stage: 'initial',
                 supervisorName,
+                supervisorId,
                 isCompleted: false,
                 createdAt: new Date()
             })
@@ -63,6 +88,7 @@ const applyProject = async (req, res) => {
             flagId: teamId,
             sender: userId,
             receiver: supervisorId,
+            projectId: _id,
             type: 'project request',
             status: 'pending'
         })

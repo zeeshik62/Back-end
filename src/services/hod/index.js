@@ -1,19 +1,20 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
+const HOD = require("../../models/hod");
+const Projects = require("../../models/projects");
+const Supervisor = require("../../models/supervisor");
 const Students = require("../../models/students");
 const jwt = require("jsonwebtoken");
-const Teams = require("../../models/teams");
-const Projects = require("../../models/projects");
-const AppliedProjects = require("../../models/applied-projects");
+const appliedProjects = require("../../models/applied-projects");
 
 const saltRounds = 10;
 
 const login = async (req, res) => {
     try {
         const { email, password, userType } = req.body;
-        const _student = await Students.findOne({ email, userType }).lean();
-        if (_student) {
-            bcrypt.compare(password, _student.password, async (err, result) => {
+        const _user = await HOD.findOne({ email }).lean();
+        if (_user) {
+            bcrypt.compare(password, _user.password, async (err, result) => {
                 if (err) {
                     return res.status(500).json({
                         message: "Password decryption error!",
@@ -21,7 +22,7 @@ const login = async (req, res) => {
                 } else {
                     if (result) {
                         const loginToken = jwt.sign(
-                            _student,
+                            _user,
                             process.env.JWT_SECRET_KEY,
                             { expiresIn: "8h" }
                         );
@@ -41,19 +42,18 @@ const login = async (req, res) => {
             });
         }
     } catch (error) {
-        console.log("🚀 ~ file: index.js:41 ~ login ~ error", error)
         return res.status(500).json({
-            message: `Server Internal Error ${error}`,
+            message: "Server Internal Error",
         });
     }
 };
 const signUp = async (req, res) => {
     try {
-        const { userName: name, email, password, section, rollNum, userType } = req.body;
-        const _user = await Students.findOne({ email, rollNum }).lean();
+        const { userName, email, password, userType } = req.body;
+        const _user = await HOD.findOne({ email });
 
         if (_user) {
-            console.log("User Already Exists!");
+            console.log("HOD Already Exists!");
             return res.status(403).json({ message: "User Already Exists!" });
         } else {
             bcrypt.hash(password, saltRounds, async (err, hash) => {
@@ -64,13 +64,11 @@ const signUp = async (req, res) => {
                     });
                 } else {
                     if (hash) {
-                        const userModel = new Students({
+                        const userModel = new HOD({
                             _id: mongoose.Types.ObjectId(),
-                            name,
+                            name: userName,
                             email,
                             password: hash,
-                            section,
-                            rollNum,
                             userType,
                         });
                         await userModel.save();
@@ -80,7 +78,7 @@ const signUp = async (req, res) => {
                             { expiresIn: "8h" }
                         );
                         res.status(200).json({
-                            message: "User Signed Up Successfully!",
+                            message: "HOD Signed Up Successfully!",
                             token,
                             userType
                         });
@@ -96,13 +94,16 @@ const signUp = async (req, res) => {
         });
     }
 };
-const getAllUsers = async (req, res) => {
+const getAllHod = async (req, res) => {
     try {
-        const _students = await Students.find({}).lean();
-        if (_students) {
+        const _projects = await Projects.find({}).lean()
+        const _supervisors = await Supervisor.find({}).lean()
+        const _students = await Students.find({}).lean()
+        const _appliedProjects = await appliedProjects.find({}).lean()
+        if (_projects) {
             res.status(200).json({
-                message: "All Students!",
-                _students
+                message: "All HOD!",
+                _projects, _supervisors, _students, _appliedProjects
             });
         } else {
             return res.status(404).json({
@@ -110,49 +111,14 @@ const getAllUsers = async (req, res) => {
             });
         }
     } catch (error) {
+        console.log("🚀 ~ file: index.js:108 ~ getAllHod ~ error", error)
         return res.status(500).json({
             message: "Server Internal Error",
         });
     }
 };
-const getDashboardData = async (req, res) => {
-    try {
-        const { id } = req.params
-        const _team = await Teams.find({}).lean()
-        let teamKey = ""
-        _team.forEach(team => {
-            if (team.teamMakerName == id) {
-                teamKey = team._id
-            } else {
-                let findKey = team.teamMembers.find(el => el.id == id)
-                if (findKey) teamKey = team._id
-            }
-        })
-        if (teamKey !== "") {
-            const _appliedProjects = await AppliedProjects.findOne({ teamId: teamKey.toString() }).lean()
-            const _project = await Projects.findById(_appliedProjects.projectId).lean()
-            res.status(201).json({
-                message: "Dashboard data!",
-                _project
-            });
-        } else {
-            res.status(201).json({
-                message: "Dashboard data!",
-                _project: null
-            });
-        }
-
-    } catch (error) {
-        console.log("🚀 ~ file: index.js:142 ~ getDashboardData ~ error", error)
-        return res.status(500).json({
-            message: "Server Internal Error",
-        });
-    }
-};
-
 module.exports = {
     login,
     signUp,
-    getAllUsers,
-    getDashboardData
+    getAllHod
 };

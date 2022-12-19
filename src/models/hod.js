@@ -1,34 +1,26 @@
 const mongoose = require('mongoose')
 
-const notificationSchema = mongoose.Schema({
+const hodSchema = mongoose.Schema({
     _id: {
         type: mongoose.Schema.Types.ObjectId
     },
-    flagId: {
+    name: {
         type: String,
         require: true
     },
-    sender: {
+    email: {
         type: String,
         require: true
     },
-    receiver: {
+    password: {
         type: String,
         require: true
     },
-    projectId: {
-        type: String,
-        require: true
-    },
-    type: {
-        type: String,
-        require: true
-    },
-    status: {
+    userType: {
         type: String,
         require: true
     }
 },
     { timestamps: true })
 
-module.exports = mongoose.model('notifications', notificationSchema)
+module.exports = mongoose.model('hod', hodSchema)
